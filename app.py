@@ -2,7 +2,8 @@ from flask import Flask, request, jsonify
 from services.role_service import get_relevant_roles
 from services.prompt_service import generate_prompts
 from services.deepseek_service import fetch_deepseek_response
-
+from services.parse_response import parse_text
+    
 # Flask app setup
 app = Flask(__name__)
 
@@ -21,7 +22,9 @@ def invest_task():
     for role, prompt in prompts:
         response_data = fetch_deepseek_response(prompt)
         story_content = response_data.get("choices", [{}])[0].get("message", {}).get("content", "")
-        results["stories"][role] = story_content
+        print("story_content",story_content)
+        formatedResponse = parse_text(story_content)
+        results["stories"][role] = formatedResponse
 
     return jsonify(results)
 

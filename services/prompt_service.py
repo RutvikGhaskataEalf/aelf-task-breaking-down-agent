@@ -18,11 +18,12 @@ def generate_prompts(task_description, relevant_roles):
         Deliver the breakdown in the following well-structured markdown format:
 
         ## Title  
-        Provide a clear, concise, and well-defined user story. (Example: As a developer, I want to implement SignalR connections secured by a token retrieved from the station’s `connect/token` endpoint, so that only authorized clients can establish real-time communication with the station.)
+        Provide a clear, concise, and well-defined user story title.
 
         ---------------
 
         ## Description
+        Provide the clear description based on user story. (Example: As a developer, I want to implement SignalR connections secured by a token retrieved from the station’s `connect/token` endpoint, so that only authorized clients can establish real-time communication with the station.)
 
         **Details & Requirements**  
         1. Requirement Title (Example: **Token Acquisition**)  
@@ -53,12 +54,7 @@ def generate_prompts(task_description, relevant_roles):
 
         ------------
 
-        ## Estimated Time: Precisely estimate the time needed to implement this task in hours. Do not break down the task further if the estimated time is <= 1 day.
-
-        =======================================================================
-
-        Important Notes:
-        - If the estimated time exceeds 1-2 days, you must break down the task into multiple detailed and well-defined stories.
+        ## Estimated Time: Precisely estimate the time needed to implement this task in hours. Do not break down the task further if the estimated time is <= 1 day. If the estimated time exceeds 1-2 days, you must break down the task into multiple detailed and well-defined stories without any notes, further description, Notes or Final Breakdown.
         """
         prompts.append((role, prompt))
     return prompts
