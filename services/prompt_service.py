@@ -15,7 +15,7 @@ def generate_prompts(task_description, relevant_roles):
         - Small
         - Testable
 
-        Deliver the breakdown in the following well-structured markdown format:
+        Deliver the breakdown in the following well-structured markdown format according to below template:
 
         ## Title  
         Provide a clear, concise, and well-defined user story title.
@@ -54,7 +54,7 @@ def generate_prompts(task_description, relevant_roles):
 
         ------------
 
-        ## Estimated Time: Precisely estimate the time needed to implement this task in hours. Do not break down the task further if the estimated time is <= 1 day. If the estimated time exceeds 1-2 days, you must break down the task into multiple detailed and well-defined stories without any notes, further description, Notes or Final Breakdown.
+        ## Estimated Time: Provide a precise estimate of the time required to complete this task in fixed hours, using whole numbers only (e.g., 8, 10, 12). If the estimated time is 8 hours or less, treat it as a single task. If the estimated time exceeds 8 hours but is still manageable within 1-2 days, provide a well-defined breakdown into smaller user stories. If the task requires more than 2 days, ensure it is divided into multiple detailed and independent stories, each adhering strictly to the INVEST principles, without any additional notes or further breakdown.
         """
         prompts.append((role, prompt))
     return prompts

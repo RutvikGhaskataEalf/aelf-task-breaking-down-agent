@@ -5,7 +5,7 @@ def parse_text(input_text):
     parsed = []
     
     current = {}
-    user_story_match = re.search(r'### (User Story.*?)\n', input_text)
+    user_story_match = re.search(r'### (User Story*?)\n', input_text)
     user_story = user_story_match.group(1).strip() if user_story_match else ''
 
     for section in sections:
@@ -26,6 +26,13 @@ def parse_text(input_text):
                 additional_notes_match = re.search(r'### Additional Notes\s*(.*?)$', content, re.DOTALL)
                 if additional_notes_match:
                     current['Additional Notes'] = additional_notes_match.group(1).strip()
+
+    # Fallback when no ## Title section exists but user story is present
+    if user_story and not any(item.get('Title') for item in parsed):
+        if current:
+            current['Title'] = user_story
+        else:
+            parsed.append({'Title': user_story})
 
     if current:
         parsed.append(current)
