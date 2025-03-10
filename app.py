@@ -3,6 +3,7 @@ import requests
 import json
 import re
 from services.role_service import get_relevant_roles
+from services.task_service import get_relevant_title_and_description
 from services.prompt_service import generate_prompts
 from services.deepseek_service import fetch_deepseek_response
 from services.parse_response import parse_text
@@ -29,18 +30,15 @@ def invest_task():
         return jsonify({"error": "Task description is required"}), 400
 
     relevant_roles = get_relevant_roles(task_description)
-
     prompts = generate_prompts(task_description, relevant_roles)
 
     results = {"stories": {}}
     for role, prompt in prompts:
         response_data = fetch_deepseek_response(prompt)
+
         story_content = response_data.get("choices", [{}])[0].get("message", {}).get("content", "")
         formatedResponse = parse_text(story_content)
         results["stories"][role] = formatedResponse
-
-    print("results",results)
-
 
     issues_data = transform_input(results)
 
@@ -49,15 +47,32 @@ def invest_task():
     'Accept': 'application/vnd.github.v3+json'
     }
 
-    # return jsonify(output)
+    # Get the relevant title and description
+    main_title, main_description = get_relevant_title_and_description(task_description)
+
+    # Create apic task 
+    epic_issue_data = {
+        'title': f"{main_title}",
+        'body': f"{main_description}",
+    }
+
+    epic_issue_response = requests.post(
+        f'https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/issues',
+        headers=headers,
+        json=epic_issue_data
+    )
+
+    epicIssueJson = epic_issue_response.json()
+    
+    epic_issue_number = epicIssueJson["number"]
+    
     # Create GitHub issues for each role
     issues_created = []
     for issue in issues_data:
         issue_data = {
             'title': f"{issue['Title']}",
             'body': f"**Description:** {issue['Description']}\n\n**Estimated Time:** {issue['Estimated Time']}",
-            'labels': [issue['Role']],
-            'type': "Task"
+            'labels': [issue['Role']]
         }
 
         issue_response = requests.post(
@@ -68,6 +83,18 @@ def invest_task():
 
         if issue_response.status_code == 201:
             issueJson = issue_response.json()
+            
+            issue_id = issueJson["id"]
+
+            subissue_data = {
+                'sub_issue_id': issue_id
+            }
+            # Add subtask
+            subtask_response = requests.post(
+                f'https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/issues/{epic_issue_number}/sub_issues',
+                headers=headers,
+                json=subissue_data
+            )
 
             # Add the issue to the GitHub project using GraphQL
             graphql_query = {
