@@ -34,7 +34,7 @@ python -m venv venv
 ## Install required packages
 
 ```bash
-pip install requests python-dotenv flask
+pip install requests python-dotenv flask flask-cors
 ```
 
 ## Set up environment variables
