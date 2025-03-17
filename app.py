@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import requests
 import json
 import re
@@ -8,23 +9,39 @@ from services.prompt_service import generate_prompts
 from services.deepseek_service import fetch_deepseek_response
 from services.parse_response import parse_text
 from services.transform_input import transform_input
-from config import github_token, repo_owner,repo_name,project_id
 
 app = Flask(__name__)
+CORS(app)
 
-GITHUB_TOKEN = github_token
-REPO_OWNER = repo_owner
-REPO_NAME = repo_name
-PROJECT_ID = project_id 
-
-HEADERS = {
-    'Authorization': f'bearer {GITHUB_TOKEN}',
-    'Content-Type': 'application/json'
-}
+# {
+#     "repo_owner": "XXXXXXXXXXX",
+#     "repo_name": "hello-world",
+#     "project_id": "XXXXXXXXXXX",
+#     "task_description": "As a developer, I want to build a login page so that users can log in to the application."
+#     "end_date_field_id": "XXXXXXXXXXX"
+# }
 
 @app.route("/api/ai-agent/invest-task", methods=["POST"])
 def invest_task():
     data = request.json
+    GITHUB_TOKEN = request.headers.get("Token")
+    REPO_OWNER = data.get("repo_owner")
+    REPO_NAME = data.get("repo_name")
+    PROJECT_ID = data.get("project_id")
+
+    print("GITHUB_TOKEN: ", GITHUB_TOKEN)
+    print("REPO_OWNER: ", REPO_OWNER)
+    print("REPO_NAME: ", REPO_NAME)
+    print("PROJECT_ID: ", PROJECT_ID)
+
+    if not GITHUB_TOKEN or not REPO_OWNER or not REPO_NAME or not PROJECT_ID:
+        return jsonify({"error": "Missing required parameters"}), 400
+        
+    HEADERS = {
+    'Authorization': f'bearer {GITHUB_TOKEN}',
+    'Content-Type': 'application/json'
+   }
+
     task_description = data.get("task_description")
     if not task_description:
         return jsonify({"error": "Task description is required"}), 400
@@ -63,6 +80,8 @@ def invest_task():
     )
 
     epicIssueJson = epic_issue_response.json()
+    
+    print(f"Epic issue created: {epicIssueJson}")
     
     epic_issue_number = epicIssueJson["number"]
     
@@ -122,34 +141,41 @@ def invest_task():
             item_id = add_item_data["data"]["addProjectV2ItemById"]["item"]["id"]
             print(f"Issue added to project with item ID: {item_id}")
             
-            FIELD_ID = "PVTF_lADODAhFHc4AznpzzgpYg0g"
-            ESTIMATE_VALUE =  int(re.search(r'\d+', issue['Estimated Time']).group())
-            
-            update_field_query = f"""
-            mutation {{
-              updateProjectV2ItemFieldValue(input: {{
-                projectId: "{PROJECT_ID}",
-                itemId: "{item_id}",
-                fieldId: "{FIELD_ID}",
-                value: {{
-                   number: {float(ESTIMATE_VALUE)}
-                }}
-              }}) {{
-                projectV2Item {{
-                  id
-                }}
-              }}
-            }}
-            """
-            
-            response = requests.post(
-                "https://api.github.com/graphql",
-                json={"query": update_field_query},
-                headers=headers
-            )
-            
-            update_field_data = response.json()
-            print(f"Estimate time added to issue: {update_field_data}")
+            field_id = data.get("estimate_field_id") 
+
+            print(f"Field ID: {field_id}")
+
+            # Only update field if field_id is provided
+            if field_id and item_id:
+                try:
+                    estimate_value = int(re.search(r'\d+', issue['Estimated Time']).group())
+                    update_field_query = f"""
+                    mutation {{
+                      updateProjectV2ItemFieldValue(input: {{
+                        projectId: "{PROJECT_ID}",
+                        itemId: "{item_id}",
+                        fieldId: "{field_id}",
+                        value: {{
+                           number: {float(estimate_value)}
+                        }}
+                      }}) {{
+                        projectV2Item {{
+                          id
+                        }}
+                      }}
+                    }}
+                    """
+                    
+                    response = requests.post(
+                        "https://api.github.com/graphql",
+                        json={"query": update_field_query},
+                        headers=headers
+                    )
+                    
+                    update_field_data = response.json()
+                    print(f"Estimate time added to issue: {update_field_data}")
+                except Exception as e:
+                    print(f"Failed to update field: {str(e)}")
 
             if project_response.status_code == 200:
                 issues_created.append({"title": issue_data['title'], "status": "success"})
