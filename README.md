@@ -59,5 +59,5 @@ You can send a POST request to the API endpoint like this:
 ```bash
 curl -X POST http://127.0.0.1:5000/api/ai-agent/invest-task \
 -H "Content-Type: application/json" \
--d '{"task_description": "Build a new feature for the app"}'
+-d '{"repo_owner": "XXXXXXXXXXX","repo_name": "hello-world","project_id": "XXXXXXXXXXX","task_description": "Build a new feature for the app","estimate_field_id": "XXXXXXXXXXX"}'
 ```

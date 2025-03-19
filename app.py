@@ -18,7 +18,7 @@ CORS(app)
 #     "repo_name": "hello-world",
 #     "project_id": "XXXXXXXXXXX",
 #     "task_description": "As a developer, I want to build a login page so that users can log in to the application."
-#     "end_date_field_id": "XXXXXXXXXXX"
+#     "estimate_field_id": "XXXXXXXXXXX"
 # }
 
 @app.route("/api/ai-agent/invest-task", methods=["POST"])
